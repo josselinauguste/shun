@@ -2,12 +2,13 @@ module Blockchain
   ( appendTransaction
   , makeBlockchain
   , createBlock
-  , lastBlock
+  , lastProof
   , Block(index, timestamp, transactions, proof)
   , Transaction(..)
   , Blockchain(blocks, currentTransactions)
   ) where
 
+import Data.List.NonEmpty as NonEmpty
 import Data.Time.Clock (UTCTime)
 import Proof (Hash(..), Proof)
 
@@ -25,12 +26,13 @@ data Block
   deriving (Eq, Show)
 
 data Blockchain = Blockchain
-  { blocks :: [Block]
+  { blocks :: NonEmpty Block
   , currentTransactions :: [Transaction]
   }
 
 makeBlockchain :: Blockchain
-makeBlockchain = Blockchain {blocks = [], currentTransactions = []}
+makeBlockchain =
+  Blockchain {blocks = NonEmpty.fromList [Genesis], currentTransactions = []}
 
 appendTransaction :: Transaction -> Blockchain -> Blockchain
 appendTransaction transaction blockchain =
@@ -39,9 +41,12 @@ appendTransaction transaction blockchain =
 
 createBlock :: UTCTime -> Proof -> Blockchain -> Blockchain
 createBlock timestamp proof blockchain =
-  Blockchain {blocks = newBlock : blocks blockchain, currentTransactions = []}
+  Blockchain
+  { blocks = NonEmpty.cons newBlock (blocks blockchain)
+  , currentTransactions = []
+  }
   where
-    newBlockIndex = length (blocks blockchain) + 1
+    newBlockIndex = NonEmpty.length (blocks blockchain) + 1
     newBlock =
       Block
       { index = newBlockIndex
@@ -54,5 +59,13 @@ createBlock timestamp proof blockchain =
 hash :: Block -> Hash
 hash _ = Hash
 
+lastProof :: Blockchain -> Maybe Proof
+lastProof blockchain =
+  case block of
+    Genesis -> Nothing
+    block -> Just (proof block)
+  where
+    block = lastBlock blockchain
+
 lastBlock :: Blockchain -> Block
-lastBlock blockchain = head $ blocks blockchain
+lastBlock blockchain = NonEmpty.head $ blocks blockchain

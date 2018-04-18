@@ -17,8 +17,13 @@ data Hash =
   Hash
   deriving (Eq, Show)
 
-proofOfWork :: Proof -> Maybe Proof
-proofOfWork previousProof = find (validProof previousProof) potentialProofs
+proofOfWork :: Maybe Proof -> Maybe Proof
+proofOfWork Nothing = computeProofOfWork (Proof 100)
+proofOfWork (Just previousProof) = computeProofOfWork previousProof
+
+computeProofOfWork :: Proof -> Maybe Proof
+computeProofOfWork previousProof =
+  find (validProof previousProof) potentialProofs
   where
     potentialProofs = [Proof i | i <- [1 ..]]
 
