@@ -2,32 +2,27 @@ module Blockchain
   ( appendTransaction
   , makeBlockchain
   , createBlock
+  , lastBlock
   , Block(index, timestamp, transactions, proof)
   , Transaction(..)
   , Blockchain(blocks, currentTransactions)
   ) where
 
 import Data.Time.Clock (UTCTime)
-
-data Proof =
-  Proof
-  deriving (Eq, Show)
-
-data Hash =
-  Hash
-  deriving (Eq, Show)
+import Proof (Hash(..), Proof)
 
 data Transaction =
   Transaction
   deriving (Eq, Show)
 
-data Block = Block
-  { index :: Int
-  , timestamp :: UTCTime
-  , transactions :: [Transaction]
-  , proof :: Proof
-  , previousHash :: Hash
-  } deriving (Eq, Show)
+data Block
+  = Block { index :: Int
+          , timestamp :: UTCTime
+          , transactions :: [Transaction]
+          , proof :: Proof
+          , previousHash :: Hash }
+  | Genesis
+  deriving (Eq, Show)
 
 data Blockchain = Blockchain
   { blocks :: [Block]
