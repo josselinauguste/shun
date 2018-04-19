@@ -40,7 +40,7 @@ appendTransaction transaction blockchain =
   {currentTransactions = transaction : currentTransactions blockchain}
 
 createBlock :: UTCTime -> Proof -> Blockchain -> Blockchain
-createBlock timestamp proof blockchain =
+createBlock blockTimestamp blockProof blockchain =
   Blockchain
   { blocks = NonEmpty.cons newBlock (blocks blockchain)
   , currentTransactions = []
@@ -50,9 +50,9 @@ createBlock timestamp proof blockchain =
     newBlock =
       Block
       { index = newBlockIndex
-      , timestamp = timestamp
+      , timestamp = blockTimestamp
       , transactions = currentTransactions blockchain
-      , proof = proof
+      , proof = blockProof
       , previousHash = hash $ lastBlock blockchain
       }
 
@@ -63,7 +63,7 @@ lastProof :: Blockchain -> Maybe Proof
 lastProof blockchain =
   case block of
     Genesis -> Nothing
-    block -> Just (proof block)
+    _ -> Just (proof block)
   where
     block = lastBlock blockchain
 

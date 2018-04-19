@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5ba58386f59377b621ea4a63d9000623d43b5a506eef2dd6e860c281a3346784
+-- hash: 14f416e076d6be07a1785a00afce55f1d13c12c887ba9f976eee36e91b0006d6
 
 name:           shun
 version:        0.1.0.0
@@ -12,7 +12,7 @@ bug-reports:    https://github.com/josselinauguste/shun/issues
 author:         Josselin Auguste
 maintainer:     jauguste@iblop.net
 copyright:      2018 Josselin Auguste
-license:        BSD3
+license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
@@ -28,6 +28,7 @@ source-repository head
 library
   hs-source-dirs:
       src
+  ghc-options: -Wall -Werror
   build-depends:
       base >=4.7 && <5
     , bytestring
@@ -44,7 +45,7 @@ executable shun-exe
   main-is: Main.hs
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
   build-depends:
       base >=4.7 && <5
     , bytestring
