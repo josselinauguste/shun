@@ -18,8 +18,11 @@ data Hash =
   deriving (Eq, Show)
 
 proofOfWork :: Maybe Proof -> Maybe Proof
-proofOfWork Nothing = computeProofOfWork (Proof 100)
+proofOfWork Nothing = computeProofOfWork genesisProof
 proofOfWork (Just previousProof) = computeProofOfWork previousProof
+
+genesisProof :: Proof
+genesisProof = Proof 100
 
 computeProofOfWork :: Proof -> Maybe Proof
 computeProofOfWork previousProof =
