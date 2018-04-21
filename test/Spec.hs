@@ -16,7 +16,7 @@ main =
         let transaction = Transaction
         let blockchain = makeBlockchain
         let updatedBlockchain = appendTransaction transaction blockchain
-        head (currentTransactions updatedBlockchain) `shouldBe` transaction
+        head (pendingTransactions updatedBlockchain) `shouldBe` transaction
     describe "proof of work" $
       it "computes proof for the first block with a very low hash constraint" $ do
         let blockchain = makeBlockchain
@@ -31,8 +31,9 @@ main =
         let updatedBlockchain =
               createBlock expectedTimestamp expectedProof blockchain
         length (blocks updatedBlockchain) `shouldBe` (2 :: Int)
-        let block = NonEmpty.head $ blocks updatedBlockchain
-        index block `shouldBe` (2 :: Int)
-        timestamp block `shouldBe` expectedTimestamp
-        transactions block `shouldBe` []
-        proof block `shouldBe` expectedProof
+        let (Block blockHeader transactions) =
+              NonEmpty.head $ blocks updatedBlockchain
+        index blockHeader `shouldBe` (2 :: Int)
+        timestamp blockHeader `shouldBe` expectedTimestamp
+        proof blockHeader `shouldBe` expectedProof
+        transactions `shouldBe` []

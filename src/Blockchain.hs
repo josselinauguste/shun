@@ -3,9 +3,10 @@ module Blockchain
   , makeBlockchain
   , createBlock
   , lastProof
-  , Block(index, timestamp, transactions, proof)
+  , Block(Block)
+  , BlockHeader(index, timestamp, proof)
   , Transaction(..)
-  , Blockchain(blocks, currentTransactions)
+  , Blockchain(blocks, pendingTransactions)
   ) where
 
 import Data.List.NonEmpty as NonEmpty
@@ -16,45 +17,50 @@ data Transaction =
   Transaction
   deriving (Eq, Show)
 
+data BlockHeader = BlockHeader
+  { index :: Int
+  , timestamp :: UTCTime
+  , proof :: Proof
+  , previousHash :: Hash
+  } deriving (Eq, Show)
+
 data Block
-  = Block { index :: Int
-          , timestamp :: UTCTime
-          , transactions :: [Transaction]
-          , proof :: Proof
-          , previousHash :: Hash }
+  = Block BlockHeader
+          [Transaction]
   | Genesis
   deriving (Eq, Show)
 
 data Blockchain = Blockchain
   { blocks :: NonEmpty Block
-  , currentTransactions :: [Transaction]
+  , pendingTransactions :: [Transaction]
   }
 
 makeBlockchain :: Blockchain
 makeBlockchain =
-  Blockchain {blocks = NonEmpty.fromList [Genesis], currentTransactions = []}
+  Blockchain {blocks = NonEmpty.fromList [Genesis], pendingTransactions = []}
 
 appendTransaction :: Transaction -> Blockchain -> Blockchain
 appendTransaction transaction blockchain =
   blockchain
-  {currentTransactions = transaction : currentTransactions blockchain}
+  {pendingTransactions = transaction : pendingTransactions blockchain}
 
 createBlock :: UTCTime -> Proof -> Blockchain -> Blockchain
 createBlock blockTimestamp blockProof blockchain =
   Blockchain
   { blocks = NonEmpty.cons newBlock (blocks blockchain)
-  , currentTransactions = []
+  , pendingTransactions = []
   }
   where
     newBlockIndex = NonEmpty.length (blocks blockchain) + 1
     newBlock =
       Block
-      { index = newBlockIndex
-      , timestamp = blockTimestamp
-      , transactions = currentTransactions blockchain
-      , proof = blockProof
-      , previousHash = hash $ lastBlock blockchain
-      }
+        BlockHeader
+        { index = newBlockIndex
+        , timestamp = blockTimestamp
+        , proof = blockProof
+        , previousHash = hash $ lastBlock blockchain
+        }
+        (pendingTransactions blockchain)
 
 hash :: Block -> Hash
 hash _ = Hash
@@ -63,7 +69,7 @@ lastProof :: Blockchain -> Maybe Proof
 lastProof blockchain =
   case block of
     Genesis -> Nothing
-    _ -> Just (proof block)
+    (Block blockHeader _) -> Just (proof blockHeader)
   where
     block = lastBlock blockchain
 
