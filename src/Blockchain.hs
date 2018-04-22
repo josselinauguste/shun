@@ -5,11 +5,12 @@ module Blockchain
   , lastProof
   , Block(Block)
   , BlockHeader(index, timestamp, proof)
+  , BlockSize(BlockSize)
   , Transaction(..)
   , Blockchain(blocks, pendingTransactions)
   ) where
 
-import Data.List.NonEmpty as NonEmpty
+import qualified Data.List.NonEmpty as NonEmpty
 import Data.Time.Clock (UTCTime)
 import Proof (Hash(..), Proof)
 
@@ -30,14 +31,22 @@ data Block
   | Genesis
   deriving (Eq, Show)
 
+newtype BlockSize =
+  BlockSize Int
+
 data Blockchain = Blockchain
-  { blocks :: NonEmpty Block
+  { blocks :: NonEmpty.NonEmpty Block
   , pendingTransactions :: [Transaction]
+  , blockSize :: BlockSize
   }
 
-makeBlockchain :: Blockchain
-makeBlockchain =
-  Blockchain {blocks = NonEmpty.fromList [Genesis], pendingTransactions = []}
+makeBlockchain :: BlockSize -> Blockchain
+makeBlockchain chainBlockSize =
+  Blockchain
+  { blocks = NonEmpty.fromList [Genesis]
+  , pendingTransactions = []
+  , blockSize = chainBlockSize
+  }
 
 appendTransaction :: Transaction -> Blockchain -> Blockchain
 appendTransaction transaction blockchain =
@@ -48,10 +57,12 @@ createBlock :: UTCTime -> Proof -> Blockchain -> Blockchain
 createBlock blockTimestamp blockProof blockchain =
   Blockchain
   { blocks = NonEmpty.cons newBlock (blocks blockchain)
-  , pendingTransactions = []
+  , pendingTransactions = drop usedBlockSize (pendingTransactions blockchain)
+  , blockSize = blockSize blockchain
   }
   where
     newBlockIndex = NonEmpty.length (blocks blockchain) + 1
+    (BlockSize usedBlockSize) = blockSize blockchain
     newBlock =
       Block
         BlockHeader
@@ -60,7 +71,7 @@ createBlock blockTimestamp blockProof blockchain =
         , proof = blockProof
         , previousHash = hash $ lastBlock blockchain
         }
-        (pendingTransactions blockchain)
+        (take usedBlockSize (pendingTransactions blockchain))
 
 hash :: Block -> Hash
 hash _ = Hash
