@@ -3,12 +3,15 @@ module Proof
   , defaultHashConstraint
   , Proof
   , Hash(Hash)
-  ) where
+  )
+where
 
-import Crypto.Hash.SHA256 (hash)
-import Data.ByteString (ByteString, isPrefixOf)
-import Data.ByteString.Char8 (pack)
-import Data.List (find)
+import           Crypto.Hash.SHA256             ( hash )
+import           Data.ByteString                ( ByteString
+                                                , isPrefixOf
+                                                )
+import           Data.ByteString.Char8          ( pack )
+import           Data.List                      ( find )
 
 newtype Proof =
   Proof Int
@@ -29,10 +32,10 @@ genesisProof :: Proof
 genesisProof = Proof 100
 
 computeProofOfWork :: HashConstraint -> Proof -> Maybe Proof
-computeProofOfWork constraint previousProof =
-  find (validProof constraint previousProof) potentialProofs
-  where
-    potentialProofs = [Proof i | i <- [1 ..]]
+computeProofOfWork constraint previousProof = find
+  (validProof constraint previousProof)
+  potentialProofs
+  where potentialProofs = [ Proof i | i <- [1 ..] ]
 
 validProof :: HashConstraint -> Proof -> Proof -> Bool
 validProof constraint (Proof previousProof) (Proof proofToValidate) =
