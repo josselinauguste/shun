@@ -36,12 +36,13 @@ data Block
 
 newtype BlockSize =
   BlockSize Int
+  deriving (Eq, Show)
 
 data Blockchain = Blockchain
   { blocks :: NonEmpty.NonEmpty Block
   , pendingTransactions :: [Transaction]
   , blockSize :: BlockSize
-  }
+  } deriving (Eq, Show)
 
 makeBlockchain :: BlockSize -> Blockchain
 makeBlockchain chainBlockSize = Blockchain

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 14f416e076d6be07a1785a00afce55f1d13c12c887ba9f976eee36e91b0006d6
+-- hash: 7c37ad1991a477c6e31c4aeb3b4bfd4101904d5b7ac61a7a78769156139a7e76
 
 name:           shun
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
     , time
   exposed-modules:
       Blockchain
+      Network
       Proof
   other-modules:
       Paths_shun

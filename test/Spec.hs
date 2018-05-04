@@ -6,22 +6,26 @@ import           Test.Hspec
 
 import           Blockchain
 import           Proof
+import           Network
 
 main :: IO ()
 main = hspec $ do
   let simpleHashConstraint = isPrefixOf (pack "0")
   let blockSize            = BlockSize 1
   let blockchain           = makeBlockchain blockSize
+
   describe "make blockchain"
     $          it "initializes blockchain with genesis block"
     $          show (NonEmpty.head $ blocks $ makeBlockchain blockSize)
     `shouldBe` "Genesis"
+
   describe "append transaction to the chain"
     $ it "returns the new blockchain with the transaction"
     $ do
         let transaction       = Transaction
         let updatedBlockchain = appendTransaction transaction blockchain
         head (pendingTransactions updatedBlockchain) `shouldBe` transaction
+
   describe "create a block" $ do
     let (Just expectedProof) =
           proofOfWork simpleHashConstraint $ lastProof blockchain
@@ -53,7 +57,28 @@ main = hspec $ do
             NonEmpty.head $ blocks updatedBlockchain
       newBlockTransactions `shouldBe` [expectedTransaction1]
       pendingTransactions updatedBlockchain `shouldBe` [expectedTransaction2]
+
   describe "proof of work"
     $ it "computes proof for the first block with a very low hash constraint"
     $ show (proofOfWork simpleHashConstraint $ lastProof blockchain)
     `shouldBe` "Just (Proof 172)"
+
+  describe "Network" $ do
+    it "register a node to the network" $ do
+      let newNode = Node blockchain
+      head (nodes $ registerNodes [newNode] (Network [])) `shouldBe` newNode
+    it "resolve conflict when all nodes have the same blockchain" $ do
+      let node1 = Node blockchain
+      let node2 = Node blockchain
+      resolveConflict (Network [node1, node2]) `shouldBe` blockchain
+    it "resolve conflict when a node has a longer blockchain" $ do
+      let node1 = Node blockchain
+      expectedTimestamp <- getCurrentTime
+      let (Just updatedBlockchainProof) =
+            proofOfWork simpleHashConstraint $ lastProof blockchain
+      let updatedBlockchain = createBlock
+            expectedTimestamp
+            updatedBlockchainProof
+            (appendTransaction Transaction blockchain)
+      let node2 = Node updatedBlockchain
+      resolveConflict (Network [node1, node2]) `shouldBe` updatedBlockchain
