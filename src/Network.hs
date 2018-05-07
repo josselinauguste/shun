@@ -6,13 +6,15 @@ module Network
   )
 where
 
-import           Blockchain
+import           Ledger                         ( Ledger
+                                                , blocks
+                                                )
 import qualified Data.List.NonEmpty            as NonEmpty
 import           Data.Foldable                  ( maximumBy )
 import           Data.Ord                       ( comparing )
 
 newtype Node = Node
-  { blockchain :: Blockchain
+  { ledger :: Ledger
   } deriving (Eq, Show)
 
 newtype Network = Network
@@ -23,8 +25,8 @@ registerNodes :: [Node] -> Network -> Network
 registerNodes nodesToRegister network =
   network { nodes = nodesToRegister ++ nodes network }
 
-resolveConflict :: Network -> Blockchain
-resolveConflict network = maximumBy comparingBlockchainLength blockchains
+resolveConflict :: Network -> Ledger
+resolveConflict network = maximumBy comparingLength ledgers
  where
-  comparingBlockchainLength = comparing (NonEmpty.length . blocks)
-  blockchains = blockchain <$> nodes network
+  comparingLength = comparing (NonEmpty.length . blocks)
+  ledgers         = ledger <$> nodes network

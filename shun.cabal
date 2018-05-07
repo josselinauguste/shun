@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
+-- This file has been generated from package.yaml by hpack version 0.28.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7c37ad1991a477c6e31c4aeb3b4bfd4101904d5b7ac61a7a78769156139a7e76
+-- hash: e85339982b8248cc29816489a3cf40d74a9e5a8059f24c254d9f1f44bff698ef
 
 name:           shun
 version:        0.1.0.0
@@ -16,7 +16,6 @@ license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
-
 extra-source-files:
     ChangeLog.md
     README.md
@@ -35,9 +34,10 @@ library
     , cryptohash-sha256
     , time
   exposed-modules:
-      Blockchain
+      Ledger
       Network
       Proof
+      Transaction
   other-modules:
       Paths_shun
   default-language: Haskell2010

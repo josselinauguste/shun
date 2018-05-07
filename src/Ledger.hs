@@ -1,13 +1,12 @@
-module Blockchain
+module Ledger
   ( appendTransaction
-  , makeBlockchain
-  , createBlock
+  , makeLedger
+  , validateTransactions
   , lastProof
   , Block(Block)
   , BlockHeader(index, timestamp, proof)
   , BlockSize(BlockSize)
-  , Transaction(..)
-  , Blockchain(blocks, pendingTransactions)
+  , Ledger(blocks, pendingTransactions)
   )
 where
 
@@ -16,10 +15,7 @@ import           Data.Time.Clock                ( UTCTime )
 import           Proof                          ( Hash(..)
                                                 , Proof
                                                 )
-
-data Transaction =
-  Transaction
-  deriving (Eq, Show)
+import           Transaction                    ( Transaction )
 
 data BlockHeader = BlockHeader
   { index :: Int
@@ -38,50 +34,50 @@ newtype BlockSize =
   BlockSize Int
   deriving (Eq, Show)
 
-data Blockchain = Blockchain
+data Ledger = Ledger
   { blocks :: NonEmpty.NonEmpty Block
   , pendingTransactions :: [Transaction]
   , blockSize :: BlockSize
   } deriving (Eq, Show)
 
-makeBlockchain :: BlockSize -> Blockchain
-makeBlockchain chainBlockSize = Blockchain
+makeLedger :: BlockSize -> Ledger
+makeLedger chainBlockSize = Ledger
   { blocks              = NonEmpty.fromList [Genesis]
   , pendingTransactions = []
   , blockSize           = chainBlockSize
   }
 
-appendTransaction :: Transaction -> Blockchain -> Blockchain
-appendTransaction transaction blockchain = blockchain
-  { pendingTransactions = transaction : pendingTransactions blockchain
+appendTransaction :: Transaction -> Ledger -> Ledger
+appendTransaction transaction ledger = ledger
+  { pendingTransactions = transaction : pendingTransactions ledger
   }
 
-createBlock :: UTCTime -> Proof -> Blockchain -> Blockchain
-createBlock blockTimestamp blockProof blockchain = Blockchain
-  { blocks              = NonEmpty.cons newBlock (blocks blockchain)
-  , pendingTransactions = drop usedBlockSize (pendingTransactions blockchain)
-  , blockSize           = blockSize blockchain
+validateTransactions :: UTCTime -> Proof -> Ledger -> Ledger
+validateTransactions blockTimestamp blockProof ledger = Ledger
+  { blocks              = NonEmpty.cons newBlock (blocks ledger)
+  , pendingTransactions = drop usedBlockSize (pendingTransactions ledger)
+  , blockSize           = blockSize ledger
   }
  where
-  newBlockIndex             = NonEmpty.length (blocks blockchain) + 1
-  (BlockSize usedBlockSize) = blockSize blockchain
+  newBlockIndex             = NonEmpty.length (blocks ledger) + 1
+  (BlockSize usedBlockSize) = blockSize ledger
   newBlock                  = Block
     BlockHeader
       { index        = newBlockIndex
       , timestamp    = blockTimestamp
       , proof        = blockProof
-      , previousHash = hash $ lastBlock blockchain
+      , previousHash = hash $ lastBlock ledger
       }
-    (take usedBlockSize (pendingTransactions blockchain))
+    (take usedBlockSize (pendingTransactions ledger))
 
 hash :: Block -> Hash
 hash _ = Hash
 
-lastProof :: Blockchain -> Maybe Proof
-lastProof blockchain = case block of
+lastProof :: Ledger -> Maybe Proof
+lastProof ledger = case block of
   Genesis               -> Nothing
   (Block blockHeader _) -> Just (proof blockHeader)
-  where block = lastBlock blockchain
+  where block = lastBlock ledger
 
-lastBlock :: Blockchain -> Block
-lastBlock blockchain = NonEmpty.head $ blocks blockchain
+lastBlock :: Ledger -> Block
+lastBlock ledger = NonEmpty.head $ blocks ledger
