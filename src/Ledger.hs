@@ -2,6 +2,7 @@ module Ledger
   ( appendTransaction
   , makeLedger
   , validateTransactions
+  , isValid
   , lastProof
   , Block(Block)
   , BlockHeader(index, timestamp, proof)
@@ -14,6 +15,9 @@ import qualified Data.List.NonEmpty            as NonEmpty
 import           Data.Time.Clock                ( UTCTime )
 import           Proof                          ( Hash(..)
                                                 , Proof
+                                                , HashConstraint
+                                                , validProof
+                                                , genesisProof
                                                 )
 import           Transaction                    ( Transaction )
 
@@ -48,12 +52,11 @@ makeLedger chainBlockSize = Ledger
   }
 
 appendTransaction :: Transaction -> Ledger -> Ledger
-appendTransaction transaction ledger = ledger
-  { pendingTransactions = transaction : pendingTransactions ledger
-  }
+appendTransaction transaction ledger =
+  ledger { pendingTransactions = transaction : pendingTransactions ledger }
 
 validateTransactions :: UTCTime -> Proof -> Ledger -> Ledger
-validateTransactions blockTimestamp blockProof ledger = Ledger
+validateTransactions newBlockTimestamp newBlockProof ledger = Ledger
   { blocks              = NonEmpty.cons newBlock (blocks ledger)
   , pendingTransactions = drop usedBlockSize (pendingTransactions ledger)
   , blockSize           = blockSize ledger
@@ -64,8 +67,8 @@ validateTransactions blockTimestamp blockProof ledger = Ledger
   newBlock                  = Block
     BlockHeader
       { index        = newBlockIndex
-      , timestamp    = blockTimestamp
-      , proof        = blockProof
+      , timestamp    = newBlockTimestamp
+      , proof        = newBlockProof
       , previousHash = hash $ lastBlock ledger
       }
     (take usedBlockSize (pendingTransactions ledger))
@@ -73,11 +76,17 @@ validateTransactions blockTimestamp blockProof ledger = Ledger
 hash :: Block -> Hash
 hash _ = Hash
 
-lastProof :: Ledger -> Maybe Proof
-lastProof ledger = case block of
-  Genesis               -> Nothing
-  (Block blockHeader _) -> Just (proof blockHeader)
-  where block = lastBlock ledger
+lastProof :: Ledger -> Proof
+lastProof ledger = blockProof $ lastBlock ledger
+
+blockProof :: Block -> Proof
+blockProof Genesis               = genesisProof
+blockProof (Block blockHeader _) = proof blockHeader
 
 lastBlock :: Ledger -> Block
 lastBlock ledger = NonEmpty.head $ blocks ledger
+
+isValid :: HashConstraint -> Ledger -> Bool
+isValid constraint ledger = all (uncurry (validProof constraint))
+                                (zip (tail proofs) proofs)
+  where proofs = NonEmpty.toList $ blockProof <$> blocks ledger

@@ -8,7 +8,9 @@ where
 
 import           Ledger                         ( Ledger
                                                 , blocks
+                                                , isValid
                                                 )
+import           Proof                          ( HashConstraint )
 import qualified Data.List.NonEmpty            as NonEmpty
 import           Data.Foldable                  ( maximumBy )
 import           Data.Ord                       ( comparing )
@@ -25,8 +27,8 @@ registerNodes :: [Node] -> Network -> Network
 registerNodes nodesToRegister network =
   network { nodes = nodesToRegister ++ nodes network }
 
-resolveConflict :: Network -> Ledger
-resolveConflict network = maximumBy comparingLength ledgers
+resolveConflict :: HashConstraint -> Network -> Ledger
+resolveConflict constraint network = maximumBy comparingLength ledgers
  where
   comparingLength = comparing (NonEmpty.length . blocks)
-  ledgers         = ledger <$> nodes network
+  ledgers         = filter (isValid constraint) (ledger <$> nodes network)

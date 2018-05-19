@@ -1,8 +1,11 @@
 module Proof
   ( proofOfWork
   , defaultHashConstraint
+  , validProof
+  , genesisProof
   , Proof
   , Hash(Hash)
+  , HashConstraint
   )
 where
 
