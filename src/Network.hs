@@ -31,8 +31,11 @@ registerNodes nodesToRegister network = network
               )
   }
 
-resolveConflict :: HashConstraint -> Network -> Ledger
-resolveConflict constraint network = maximumBy comparingLength ledgers
+resolveConflict :: HashConstraint -> Network -> Maybe Ledger
+resolveConflict constraint network
+  | null ledgers = Nothing
+  | otherwise    = Just (maximumBy comparingLength ledgers)
  where
   comparingLength = comparing (NonEmpty.length . blocks)
-  ledgers = NonEmpty.filter (isValid constraint) (ledger <$> nodes network)
+  ledgers =
+    filter (isValid constraint) (ledger <$> NonEmpty.toList (nodes network))

@@ -103,14 +103,14 @@ main = hspec $ do
       let node2 = Node ledger
       resolveConflict simpleHashConstraint
                       (Network (NonEmpty.fromList [node1, node2]))
-        `shouldBe` ledger
+        `shouldBe` Just ledger
     it "resolve conflict when a node has a longer ledger" $ do
       let node1        = Node ledger
       let longerLedger = oneBlockLedger simpleHashConstraint blockSize
       let node2        = Node longerLedger
       resolveConflict simpleHashConstraint
                       (Network (NonEmpty.fromList [node1, node2]))
-        `shouldBe` longerLedger
+        `shouldBe` Just longerLedger
     it "only returns a valid ledger" $ do
       let node1             = Node ledger
       let expectedTimestamp = getTime
@@ -124,4 +124,17 @@ main = hspec $ do
       let node2 = Node invalidLedger
       resolveConflict simpleHashConstraint
                       (Network (NonEmpty.fromList [node1, node2]))
-        `shouldBe` ledger
+        `shouldBe` Just ledger
+    it "returns nothing when there is no valid ledger" $ do
+      let expectedTimestamp = getTime
+      let (Just invalidProof) = proofOfWork
+            simpleHashConstraint
+            (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
+      let invalidLedger = validateTransactions
+            expectedTimestamp
+            invalidProof
+            (appendTransaction Transaction ledger)
+      let invalidNode = Node invalidLedger
+      resolveConflict simpleHashConstraint
+                      (Network (NonEmpty.fromList [invalidNode]))
+        `shouldBe` Nothing
