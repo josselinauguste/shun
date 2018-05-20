@@ -93,17 +93,23 @@ main = hspec $ do
   describe "Network" $ do
     it "register a node to the network" $ do
       let newNode = Node ledger
-      head (nodes $ registerNodes [newNode] (Network [])) `shouldBe` newNode
+      NonEmpty.head
+          (nodes $ registerNodes (NonEmpty.fromList [newNode])
+                                 (Network (NonEmpty.fromList []))
+          )
+        `shouldBe` newNode
     it "resolve conflict when all nodes have the same ledger" $ do
       let node1 = Node ledger
       let node2 = Node ledger
-      resolveConflict simpleHashConstraint (Network [node1, node2])
+      resolveConflict simpleHashConstraint
+                      (Network (NonEmpty.fromList [node1, node2]))
         `shouldBe` ledger
     it "resolve conflict when a node has a longer ledger" $ do
       let node1        = Node ledger
       let longerLedger = oneBlockLedger simpleHashConstraint blockSize
       let node2        = Node longerLedger
-      resolveConflict simpleHashConstraint (Network [node1, node2])
+      resolveConflict simpleHashConstraint
+                      (Network (NonEmpty.fromList [node1, node2]))
         `shouldBe` longerLedger
     it "only returns a valid ledger" $ do
       let node1             = Node ledger
@@ -116,5 +122,6 @@ main = hspec $ do
             invalidProof
             (appendTransaction Transaction ledger)
       let node2 = Node invalidLedger
-      resolveConflict simpleHashConstraint (Network [node1, node2])
+      resolveConflict simpleHashConstraint
+                      (Network (NonEmpty.fromList [node1, node2]))
         `shouldBe` ledger
