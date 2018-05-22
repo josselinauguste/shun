@@ -11,20 +11,16 @@ module Ledger
   )
 where
 
-import qualified Data.List.NonEmpty            as NonEmpty
-import           Data.Time.Clock                ( UTCTime )
-import           Proof                          ( Hash(..)
-                                                , Proof
-                                                , HashConstraint
-                                                , validProof
-                                                , genesisProof
-                                                )
-import           Transaction                    ( Transaction )
+import qualified Data.List.NonEmpty as NonEmpty
+import           Data.Time.Clock    (UTCTime)
+import           Proof              (Hash (..), HashConstraint, Proof,
+                                     genesisProof, validProof)
+import           Transaction        (Transaction)
 
 data BlockHeader = BlockHeader
-  { index :: Int
-  , timestamp :: UTCTime
-  , proof :: Proof
+  { index        :: Int
+  , timestamp    :: UTCTime
+  , proof        :: Proof
   , previousHash :: Hash
   } deriving (Eq, Show)
 
@@ -39,9 +35,9 @@ newtype BlockSize =
   deriving (Eq, Show)
 
 data Ledger = Ledger
-  { blocks :: NonEmpty.NonEmpty Block
+  { blocks              :: NonEmpty.NonEmpty Block
   , pendingTransactions :: [Transaction]
-  , blockSize :: BlockSize
+  , blockSize           :: BlockSize
   } deriving (Eq, Show)
 
 makeLedger :: BlockSize -> Ledger

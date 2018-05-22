@@ -6,14 +6,11 @@ module Network
   )
 where
 
-import           Data.Foldable                  ( maximumBy )
-import qualified Data.List.NonEmpty            as NonEmpty
-import           Data.Ord                       ( comparing )
-import           Ledger                         ( Ledger
-                                                , blocks
-                                                , isValid
-                                                )
-import           Proof                          ( HashConstraint )
+import           Data.Foldable      (maximumBy)
+import qualified Data.List.NonEmpty as NonEmpty
+import           Data.Ord           (comparing)
+import           Ledger             (Ledger, blocks, isValid)
+import           Proof              (HashConstraint)
 
 newtype Node = Node
   { ledger :: Ledger

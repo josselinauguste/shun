@@ -9,12 +9,10 @@ module Proof
   )
 where
 
-import           Crypto.Hash.SHA256             ( hash )
-import           Data.ByteString                ( ByteString
-                                                , isPrefixOf
-                                                )
-import           Data.ByteString.Char8          ( pack )
-import           Data.List                      ( find )
+import           Crypto.Hash.SHA256    (hash)
+import           Data.ByteString       (ByteString, isPrefixOf)
+import           Data.ByteString.Char8 (pack)
+import           Data.List             (find)
 
 newtype Proof =
   Proof Int

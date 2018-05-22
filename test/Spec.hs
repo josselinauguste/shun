@@ -1,16 +1,19 @@
-import           Data.ByteString                ( isPrefixOf )
-import           Data.ByteString.Char8          ( pack )
-import qualified Data.List.NonEmpty            as NonEmpty
-import           Data.Time.Calendar             ( fromGregorian )
-import           Data.Time.Clock                ( UTCTime(..)
-                                                , secondsToDiffTime
-                                                )
+import           Data.ByteString       (isPrefixOf)
+import           Data.ByteString.Char8 (pack)
+import qualified Data.List.NonEmpty    as NonEmpty
+import           Data.Time.Calendar    (fromGregorian)
+import           Data.Time.Clock       (UTCTime (..), secondsToDiffTime)
 import           Test.Hspec
 
 import           Ledger
 import           Network
 import           Proof
 import           Transaction
+
+-- TODO
+-- * the proof does not use a block control sum
+--   use previous hash + sum control of current block content?
+--   bitcoin = header incl. merkle tree of transactions
 
 getTime :: UTCTime
 getTime =
@@ -32,18 +35,21 @@ main = hspec $ do
   let simpleHashConstraint = isPrefixOf (pack "0")
   let blockSize            = BlockSize 1
   let ledger               = makeLedger blockSize
+
   describe "Ledger" $ do
-    describe "make ledger"
+    describe "Make ledger"
       $          it "initializes ledger with genesis block"
       $          show (NonEmpty.head $ blocks $ makeLedger blockSize)
       `shouldBe` "Genesis"
-    describe "append transaction to the chain"
+
+    describe "Append transaction to the chain"
       $ it "returns the new ledger with the transaction"
       $ do
           let transaction   = Transaction
           let updatedLedger = appendTransaction transaction ledger
           head (pendingTransactions updatedLedger) `shouldBe` transaction
-    describe "create a block" $ do
+
+    describe "Create a block" $ do
       let (Just expectedProof) =
             proofOfWork simpleHashConstraint $ Just $ lastProof ledger
       it "returns the validated block and reinitialize transactions" $ do
@@ -74,7 +80,8 @@ main = hspec $ do
               NonEmpty.head $ blocks updatedLedger
         newBlockTransactions `shouldBe` [expectedTransaction1]
         pendingTransactions updatedLedger `shouldBe` [expectedTransaction2]
-    describe "validate ledger" $ do
+
+    describe "Validate ledger" $ do
       it "returns true for an empty ledger"
         $          isValid simpleHashConstraint ledger
         `shouldBe` True
@@ -86,11 +93,14 @@ main = hspec $ do
         $          isValid (isPrefixOf (pack "Z"))
                            (oneBlockLedger simpleHashConstraint blockSize)
         `shouldBe` False
-  describe "proof of work"
+
+  describe "Proof of work"
     $ it "computes proof for the first block with a very low hash constraint"
     $ show (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
     `shouldBe` "Just (Proof 172)"
+
   describe "Network" $ do
+    let expectedTimestamp = getTime
     it "register a node to the network" $ do
       let newNode = Node ledger
       NonEmpty.head
@@ -113,7 +123,6 @@ main = hspec $ do
         `shouldBe` Just longerLedger
     it "only returns a valid ledger" $ do
       let node1             = Node ledger
-      let expectedTimestamp = getTime
       let (Just invalidProof) = proofOfWork
             simpleHashConstraint
             (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
@@ -126,7 +135,6 @@ main = hspec $ do
                       (Network (NonEmpty.fromList [node1, node2]))
         `shouldBe` Just ledger
     it "returns nothing when there is no valid ledger" $ do
-      let expectedTimestamp = getTime
       let (Just invalidProof) = proofOfWork
             simpleHashConstraint
             (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
