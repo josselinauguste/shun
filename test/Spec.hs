@@ -10,25 +10,16 @@ import           Network
 import           Proof
 import           Transaction
 
--- TODO
--- * the proof does not use a block control sum
---   use previous hash + sum control of current block content?
---   bitcoin = header incl. merkle tree of transactions
-
-getTime :: UTCTime
-getTime =
+time :: UTCTime
+time =
   UTCTime {utctDay = fromGregorian 1984 4 28, utctDayTime = secondsToDiffTime 0}
 
 oneBlockLedger :: HashConstraint -> BlockSize -> Ledger
 oneBlockLedger hashConstraint blockSize = do
-  let ledger = makeLedger blockSize
-  let (Just expectedProof) =
-        proofOfWork hashConstraint $ Just $ lastProof ledger
-  let expectedTimestamp   = getTime
-  let expectedTransaction = Transaction
-  validateTransactions expectedTimestamp
-                       expectedProof
-                       (appendTransaction expectedTransaction ledger)
+  let ledger            = makeLedger blockSize
+  let (Just blockProof) = proofOfWork hashConstraint $ Just $ lastProof ledger
+  let transaction       = Transaction
+  validateTransactions time blockProof (appendTransaction transaction ledger)
 
 main :: IO ()
 main = hspec $ do
@@ -42,7 +33,7 @@ main = hspec $ do
       $          show (NonEmpty.head $ blocks $ makeLedger blockSize)
       `shouldBe` "Genesis"
 
-    describe "Append transaction to the chain"
+    describe "Append transaction to the pool"
       $ it "returns the new ledger with the transaction"
       $ do
           let transaction   = Transaction
@@ -52,30 +43,27 @@ main = hspec $ do
     describe "Create a block" $ do
       let (Just expectedProof) =
             proofOfWork simpleHashConstraint $ Just $ lastProof ledger
-      it "returns the validated block and reinitialize transactions" $ do
-        let expectedTimestamp   = getTime
+      it "returns the validated block and reinitializes transactions pool" $ do
         let expectedTransaction = Transaction
         let updatedLedger = validateTransactions
-              expectedTimestamp
+              time
               expectedProof
               (appendTransaction expectedTransaction ledger)
         length (blocks updatedLedger) `shouldBe` (2 :: Int)
         let (Block newBlockHeader newBlockTransactions) =
               NonEmpty.head $ blocks updatedLedger
         index newBlockHeader `shouldBe` (2 :: Int)
-        timestamp newBlockHeader `shouldBe` expectedTimestamp
+        timestamp newBlockHeader `shouldBe` time
         proof newBlockHeader `shouldBe` expectedProof
         newBlockTransactions `shouldBe` [expectedTransaction]
       it "only takes block size transactions from pending ones" $ do
-        let expectedTimestamp = getTime
         let (expectedTransaction1, expectedTransaction2) =
               (Transaction, Transaction)
         let ledgerWithTransactions =
               appendTransaction expectedTransaction2
                 $ appendTransaction expectedTransaction1 ledger
-        let updatedLedger = validateTransactions expectedTimestamp
-                                                 expectedProof
-                                                 ledgerWithTransactions
+        let updatedLedger =
+              validateTransactions time expectedProof ledgerWithTransactions
         let (Block _newBlockHeader newBlockTransactions) =
               NonEmpty.head $ blocks updatedLedger
         newBlockTransactions `shouldBe` [expectedTransaction1]
@@ -94,13 +82,18 @@ main = hspec $ do
                            (oneBlockLedger simpleHashConstraint blockSize)
         `shouldBe` False
 
+-- TODO
+-- * the proof does not use a block control sum
+--   use previous hash + sum control of current block content?
+--   bitcoin = header incl. merkle tree of transactions
+
   describe "Proof of work"
-    $ it "computes proof for the first block with a very low hash constraint"
-    $ show (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
+    $          do
+                 it "computes proof for the first block with a very low hash constraint"
+    $          show (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
     `shouldBe` "Just (Proof 172)"
 
   describe "Network" $ do
-    let expectedTimestamp = getTime
     it "register a node to the network" $ do
       let newNode = Node ledger
       NonEmpty.head
@@ -122,12 +115,12 @@ main = hspec $ do
                       (Network (NonEmpty.fromList [node1, node2]))
         `shouldBe` Just longerLedger
     it "only returns a valid ledger" $ do
-      let node1             = Node ledger
+      let node1 = Node ledger
       let (Just invalidProof) = proofOfWork
             simpleHashConstraint
             (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
       let invalidLedger = validateTransactions
-            expectedTimestamp
+            time
             invalidProof
             (appendTransaction Transaction ledger)
       let node2 = Node invalidLedger
@@ -139,7 +132,7 @@ main = hspec $ do
             simpleHashConstraint
             (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
       let invalidLedger = validateTransactions
-            expectedTimestamp
+            time
             invalidProof
             (appendTransaction Transaction ledger)
       let invalidNode = Node invalidLedger

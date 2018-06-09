@@ -23,8 +23,8 @@ newtype Network = Network
 registerNodes :: NonEmpty.NonEmpty Node -> Network -> Network
 registerNodes nodesToRegister network = network
   { nodes = NonEmpty.fromList
-              (  (NonEmpty.toList nodesToRegister)
-              ++ (NonEmpty.toList (nodes network))
+              (NonEmpty.toList nodesToRegister
+              ++ NonEmpty.toList (nodes network)
               )
   }
 

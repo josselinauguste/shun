@@ -1,5 +1,4 @@
-module Transaction
-where
+module Transaction where
 
 data Transaction =
   Transaction
