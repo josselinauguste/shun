@@ -1,8 +1,10 @@
-import           Data.ByteString       (isPrefixOf)
-import           Data.ByteString.Char8 (pack)
-import qualified Data.List.NonEmpty    as NonEmpty
-import           Data.Time.Calendar    (fromGregorian)
-import           Data.Time.Clock       (UTCTime (..), secondsToDiffTime)
+import           Data.ByteString                ( isPrefixOf )
+import           Data.ByteString.Char8          ( pack )
+import qualified Data.List.NonEmpty            as NonEmpty
+import           Data.Time.Calendar             ( fromGregorian )
+import           Data.Time.Clock                ( UTCTime(..)
+                                                , secondsToDiffTime
+                                                )
 import           Test.Hspec
 
 import           Ledger
@@ -82,16 +84,15 @@ main = hspec $ do
                            (oneBlockLedger simpleHashConstraint blockSize)
         `shouldBe` False
 
--- TODO
--- * the proof does not use a block control sum
---   use previous hash + sum control of current block content?
---   bitcoin = header incl. merkle tree of transactions
+  describe "Proof of work" $ do
+    it "computes proof for the first block with a very low hash constraint"
+      $ show (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
+      `shouldBe` "Just (Proof 172)"
 
-  describe "Proof of work"
-    $          do
-                 it "computes proof for the first block with a very low hash constraint"
-    $          show (proofOfWork simpleHashConstraint $ Just $ lastProof ledger)
-    `shouldBe` "Just (Proof 172)"
+    it "interspercing a block in valid ledger invalidates the ledger" $ pending
+
+    it "modifying transactions in a validated block invalidates the ledger"
+      $ pending
 
   describe "Network" $ do
     it "register a node to the network" $ do
